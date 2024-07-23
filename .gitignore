@@ -1,0 +1,8 @@
+myenv/
+# Python byte-code files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+# Django migrations
+migrations/*

@@ -1,0 +1,353 @@
+{%extends 'base.html'%}
+<!--  -->
+{%load static%}
+<!--  -->
+{%block title%}Chatbot{%endblock title%}
+<!--  -->
+{%block content%}
+<style>
+	.chat-box {
+		height: 100%;
+		width: 100%;
+		background-color: #fff;
+		overflow: hidden;
+	}
+	.chats {
+		padding: 30px 15px;
+	}
+	.chat-avatar {
+		float: right;
+	}
+	.chat-avatar .avatar {
+		width: 30px;
+		-webkit-box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.2),
+			0 6px 10px 0 rgba(0, 0, 0, 0.3);
+		box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.2), 0 6px 10px 0 rgba(0, 0, 0, 0.3);
+	}
+	.chat-body {
+		display: block;
+		margin: 10px 30px 0 0;
+		overflow: hidden;
+	}
+	.chat-body:first-child {
+		margin-top: 0;
+	}
+	.chat-content {
+		position: relative;
+		display: block;
+		float: right;
+		padding: 8px 15px;
+		margin: 0 20px 10px 0;
+		clear: both;
+		color: #fff;
+		background-color: #62a8ea;
+		border-radius: 4px;
+		-webkit-box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.37);
+		box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.37);
+	}
+	.chat-content:before {
+		position: absolute;
+		top: 10px;
+		right: -10px;
+		width: 0;
+		height: 0;
+		content: "";
+		border: 5px solid transparent;
+		border-left-color: #62a8ea;
+	}
+	.chat-content > p:last-child {
+		margin-bottom: 0;
+	}
+	.chat-content + .chat-content:before {
+		border-color: transparent;
+	}
+	.chat-time {
+		display: block;
+		margin-top: 8px;
+		color: rgba(255, 255, 255, 0.6);
+	}
+	.chat-left .chat-avatar {
+		float: left;
+	}
+	.chat-left .chat-body {
+		margin-right: 0;
+		margin-left: 30px;
+	}
+	.chat-left .chat-content {
+		float: left;
+		margin: 0 0 10px 20px;
+		color: #76838f;
+		background-color: #dfe9ef;
+	}
+	.chat-left .chat-content:before {
+		right: auto;
+		left: -10px;
+		border-right-color: #dfe9ef;
+		border-left-color: transparent;
+	}
+	.chat-left .chat-content + .chat-content:before {
+		border-color: transparent;
+	}
+	.chat-left .chat-time {
+		color: #a3afb7;
+	}
+	.panel-footer {
+		padding: 0 30px 15px;
+		background-color: transparent;
+		border-top: 1px solid transparent;
+		border-bottom-right-radius: 3px;
+		border-bottom-left-radius: 3px;
+	}
+	.avatar img {
+		width: 100%;
+		max-width: 100%;
+		height: auto;
+		border: 0 none;
+		border-radius: 1000px;
+	}
+	.chat-avatar .avatar {
+		width: 30px;
+	}
+	.avatar {
+		position: relative;
+		display: inline-block;
+		width: 40px;
+		white-space: nowrap;
+		border-radius: 1000px;
+		vertical-align: bottom;
+	}
+	.panel-body {
+		height: 27em;
+		overflow-y: auto;
+	}
+</style>
+<div class="container bootstrap snippets bootdeys">
+	<div class="">
+		<!-- Panel Chat -->
+		<div class="panel" id="chat">
+			<div class="panel-heading mt-2 border-bottom">
+				<h3 class="panel-title fw-bold">
+					<i class="icon wb-chat-text" aria-hidden="true"></i> Hospital Chatbot
+				</h3>
+			</div>
+			<div class="panel-body">
+				<div class="chats"></div>
+			</div>
+			<div class="panel-footer">
+				<form method="POST" id="chatForm">
+					{% csrf_token %}
+					<div class="input-group">
+						<input
+							name="data"
+							type="text"
+							class="form-control"
+							placeholder="Say something"
+						/>
+						<span class="input-group-btn">
+							<button class="btn btn-danger" type="submit">Send</button>
+						</span>
+					</div>
+				</form>
+			</div>
+		</div>
+		<!-- End Panel Chat -->
+	</div>
+</div>
+{%block scripts%}
+<script
+	src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"
+	integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=="
+	crossorigin="anonymous"
+	referrerpolicy="no-referrer"
+></script>
+<script src="https://netdna.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+<script>
+	let user_response = (message) => {
+		return `
+            <div class="chat">
+                <div class="chat-avatar">
+                    <a class="avatar avatar-online" data-toggle="tooltip" href="#" data-placement="right" title="You">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="#2836f0" stroke="#2836f0">
+                            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                            <g id="SVGRepo_iconCarrier"> 
+                                <rect x="0" fill="none" width="24" height="24"></rect> 
+                                <g>
+                                    <path d="M12 4c2.21 0 4 1.79 4 4s-1.79 4-4 4-4-1.79-4-4 1.79-4 4-4zm0 16s8 0 8-2c0-2.4-3.9-5-8-5s-8 2.6-8 5c0 2 8 2 8 2z"></path> 
+                                </g> 
+                            </g>
+                        </svg>
+                        <i></i>
+                    </a>
+                </div>
+                <div class="chat-body">
+                    <div class="chat-content">
+                        <p>${message}</p>
+                        <time class="chat-time" datetime="${new Date().toISOString()}">${new Date().toLocaleTimeString()}</time>
+                    </div>
+                </div>
+            </div>`;
+	};
+
+	let bot_response = (message) => {
+		return `
+            <div class="chat chat-left">
+                <div class="chat-avatar">
+                    <a class="avatar avatar-online" data-toggle="tooltip" href="#" data-placement="left" title="Bot">
+                        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                            <g id="SVGRepo_iconCarrier">
+                                <rect width="48" height="48" fill="white" fill-opacity="0.01"></rect> 
+                                <rect x="9" y="18" width="30" height="24" rx="2" fill="red" stroke="#000000" stroke-width="4"></rect>
+                                <circle cx="17" cy="26" r="2" fill="white"></circle>
+                                <circle cx="31" cy="26" r="2" fill="white"></circle>
+                                <path d="M20 32C18.8954 32 18 32.8954 18 34C18 35.1046 18.8954 36 20 36V32ZM28 36C29.1046 36 30 35.1046 30 34C30 32.8954 29.1046 32 28 32V36ZM20 36H28V32H20V36Z" fill="white"></path>
+                                <path d="M24 10V18" stroke="#000000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path>
+                                <path d="M4 26V34" stroke="#000000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path>
+                                <path d="M44 26V34" stroke="#000000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path>
+                                <circle cx="24" cy="8" r="2" stroke="#000000" stroke-width="4"></circle>
+                            </g>
+                        </svg>
+                        <i></i>
+                    </a>
+                </div>
+                <div class="chat-body">
+                    <div class="chat-content">
+                        <p>${message}</p>
+                        <time class="chat-time" datetime="${new Date().toISOString()}">${new Date().toLocaleTimeString()}</time>
+                    </div>
+                </div>
+            </div>`;
+	};
+
+	// Function to scroll chat container to the bottom
+	let scrollToBottom = () => {
+		const chatContainer = $(".chats");
+		chatContainer.scrollTop(chatContainer.prop("scrollHeight"));
+	};
+
+	// Handle form submission for the chat form
+	$(document).on("submit", "#chatForm", function (e) {
+		e.preventDefault();
+		const chatContainer = $(".chats");
+		const messageInput = $("input[name=data]");
+		const mssgBox = messageInput.val().trim();
+
+		if (mssgBox !== "") {
+			chatContainer.append(user_response(mssgBox));
+			messageInput.val(""); // Clear the input field
+			messageInput.attr("disabled", true);
+			scrollToBottom();
+
+			$.ajax({
+				type: "POST",
+				url: "{{request.path}}",
+				data: JSON.stringify({
+					data: mssgBox,
+					csrfmiddlewaretoken: $("input[name=csrfmiddlewaretoken]").val(),
+				}),
+				contentType: "application/json",
+				success: (response) => {
+					if (response.response) {
+						setTimeout(() => {
+							chatContainer.append(bot_response(response.response));
+							messageInput.attr("disabled", false);
+							scrollToBottom();
+
+							// Check if the response contains a specific message to display a form
+							if (
+								response.response.includes(
+									"The form below is provided for you to book an appointment"
+								)
+							) {
+								const formHtml = `
+                                    <div class="chat chat-left">
+                                        <div class="chat-avatar">
+                                            <a class="avatar avatar-online" data-toggle="tooltip" href="#" data-placement="left" title="Bot">
+                                                <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                                    <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                                                    <g id="SVGRepo_iconCarrier">
+                                                        <rect width="48" height="48" fill="white" fill-opacity="0.01"></rect>
+                                                        <rect x="9" y="18" width="30" height="24" rx="2" fill="#2F88FF" stroke="#000000" stroke-width="4"></rect>
+                                                        <circle cx="17" cy="26" r="2" fill="white"></circle>
+                                                        <circle cx="31" cy="26" r="2" fill="white"></circle>
+                                                        <path d="M20 32C18.8954 32 18 32.8954 18 34C18 35.1046 18.8954 36 20 36V32ZM28 36C29.1046 36 30 35.1046 30 34C30 32.8954 29.1046 32 28 32V36ZM20 36H28V32H20V36Z" fill="white"></path>
+                                                        <path d="M24 10V18" stroke="#000000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path>
+                                                        <path d="M4 26V34" stroke="#000000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path>
+                                                        <path d="M44 26V34" stroke="#000000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path>
+                                                        <circle cx="24" cy="8" r="2" stroke="#000000" stroke-width="4"></circle>
+                                                    </g>
+                                                </svg>
+                                                <i></i>
+                                            </a>
+                                        </div>
+                                        <div class="chat-body">
+                                            <div class="chat-content">
+                                                <form method="POST" id="appointmentForm">
+                                                    <div class="my-2">
+                                                        <label for="">Date available</label>
+                                                        {{form.date}}
+                                                    </div>
+                                                    <div class="my-2">
+                                                        <label for="">Doctor</label>
+                                                        {{form.doctor}}
+                                                    </div>
+                                                    <div class="my-2">
+                                                        <label for="">What's your reason for your appointment?</label>
+                                                        {{form.reason}}
+                                                    </div>
+                                                    <div>
+                                                        <button class="btn btn-success appointment-btn" type="button">
+                                                            Submit
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                                <time class="chat-time" datetime="${new Date().toISOString()}">${new Date().toLocaleTimeString()}</time>
+                                            </div>
+                                        </div>
+                                    </div>`;
+
+								chatContainer.append(formHtml);
+								$("input").addClass("form-control");
+								$("select").addClass("form-select");
+								$("textarea").addClass("form-control");
+								scrollToBottom();
+
+								// Attach the click event to the newly added button
+								$(document).on("click", ".appointment-btn", function () {
+									const formData = $("#appointmentForm").serialize();
+									$.ajax({
+										type: "POST",
+										url: "/api/appointment/",
+										data: formData,
+										success: (response) => {
+											if (response.success) {
+												chatContainer.append(bot_response(response.success));
+											} else if (response.error) {
+												chatContainer.append(bot_response(response.error));
+											} else if (response.filled) {
+												chatContainer.append(bot_response(response.filled));
+											}
+											scrollToBottom();
+										},
+										error: () => {
+											console.log("An error occurred on the client side.");
+										},
+									});
+								});
+							}
+						}, 2000);
+					}
+				},
+				error: (error) => {
+					console.log("Error:", error);
+					messageInput.attr("disabled", false);
+				},
+			});
+		}
+	});
+</script>
+
+{%endblock scripts%} {%endblock content%}
