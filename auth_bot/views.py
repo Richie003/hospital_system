@@ -24,10 +24,13 @@ def sign_up(request):
                     {"message": f"Account creation successful for {email}"}, safe=False
                 )
             else:
-                return JsonResponse("User with such details already exists", safe=False)
+                return JsonResponse(
+                    {"exists": "User with such details already exists"}, safe=False
+                )
         else:
             message = form.error_messages
             print(message)
+            return JsonResponse({"error": message}, safe=False)
     context = {"form": form}
     return render(request, "auths/signup.html", context)
 

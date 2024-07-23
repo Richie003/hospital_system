@@ -251,6 +251,18 @@
 								$("#alert-cont").removeClass("alert-info show");
 								window.location = "/auths/sign_in/";
 							}, 2000);
+						} else if (response.exists) {
+							$("#alert-cont").addClass("alert-warning show");
+							mssg.text(response.exists);
+							setTimeout(() => {
+								$("#alert-cont").removeClass("alert-warning show");
+							}, 2000);
+						} else {
+							$("#alert-cont").addClass("alert-danger show");
+							mssg.text(response.error.password_mismatch);
+							setTimeout(() => {
+								$("#alert-cont").removeClass("alert-danger show");
+							}, 2000);
 						}
 					},
 					error: () => {
