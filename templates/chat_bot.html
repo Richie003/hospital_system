@@ -162,6 +162,7 @@
 ></script>
 <script src="https://netdna.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
 <script>
+	// Function to format user response
 	let user_response = (message) => {
 		return `
             <div class="chat">
@@ -170,11 +171,11 @@
                         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="#2836f0" stroke="#2836f0">
                             <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
                             <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-                            <g id="SVGRepo_iconCarrier"> 
-                                <rect x="0" fill="none" width="24" height="24"></rect> 
+                            <g id="SVGRepo_iconCarrier">
+                                <rect x="0" fill="none" width="24" height="24"></rect>
                                 <g>
-                                    <path d="M12 4c2.21 0 4 1.79 4 4s-1.79 4-4 4-4-1.79-4-4 1.79-4 4-4zm0 16s8 0 8-2c0-2.4-3.9-5-8-5s-8 2.6-8 5c0 2 8 2 8 2z"></path> 
-                                </g> 
+                                    <path d="M12 4c2.21 0 4 1.79 4 4s-1.79 4-4 4-4-1.79-4-4 1.79-4 4-4zm0 16s8 0 8-2c0-2.4-3.9-5-8-5s-8 2.6-8 5c0 2 8 2 8 2z"></path>
+                                </g>
                             </g>
                         </svg>
                         <i></i>
@@ -189,6 +190,7 @@
             </div>`;
 	};
 
+	// Function to format bot response
 	let bot_response = (message) => {
 		return `
             <div class="chat chat-left">
@@ -198,7 +200,7 @@
                             <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
                             <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
                             <g id="SVGRepo_iconCarrier">
-                                <rect width="48" height="48" fill="white" fill-opacity="0.01"></rect> 
+                                <rect width="48" height="48" fill="white" fill-opacity="0.01"></rect>
                                 <rect x="9" y="18" width="30" height="24" rx="2" fill="red" stroke="#000000" stroke-width="4"></rect>
                                 <circle cx="17" cy="26" r="2" fill="white"></circle>
                                 <circle cx="31" cy="26" r="2" fill="white"></circle>
@@ -215,6 +217,42 @@
                 <div class="chat-body">
                     <div class="chat-content">
                         <p>${message}</p>
+                        <time class="chat-time" datetime="${new Date().toISOString()}">${new Date().toLocaleTimeString()}</time>
+                    </div>
+                </div>
+            </div>`;
+	};
+
+	// Function to format bot medical response
+	let bot_response_medic = (message) => {
+		return `
+            <div class="chat chat-left">
+                <div class="chat-avatar">
+                    <a class="avatar avatar-online" data-toggle="tooltip" href="#" data-placement="left" title="Bot">
+                        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                            <g id="SVGRepo_iconCarrier">
+                                <rect width="48" height="48" fill="white" fill-opacity="0.01"></rect>
+                                <rect x="9" y="18" width="30" height="24" rx="2" fill="red" stroke="#000000" stroke-width="4"></rect>
+                                <circle cx="17" cy="26" r="2" fill="white"></circle>
+                                <circle cx="31" cy="26" r="2" fill="white"></circle>
+                                <path d="M20 32C18.8954 32 18 32.8954 18 34C18 35.1046 18.8954 36 20 36V32ZM28 36C29.1046 36 30 35.1046 30 34C30 32.8954 29.1046 32 28 32V36ZM20 36H28V32H20V36Z" fill="white"></path>
+                                <path d="M24 10V18" stroke="#000000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path>
+                                <path d="M4 26V34" stroke="#000000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path>
+                                <path d="M44 26V34" stroke="#000000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path>
+                                <circle cx="24" cy="8" r="2" stroke="#000000" stroke-width="4"></circle>
+                            </g>
+                        </svg>
+                        <i></i>
+                    </a>
+                </div>
+                <div class="chat-body">
+                    <div class="chat-content">
+                        <p>Symptoms: ${message.symptoms}</p>
+                        <p>Here are some remedies I can suggest: ${
+													message.remedies
+												}</p>
                         <time class="chat-time" datetime="${new Date().toISOString()}">${new Date().toLocaleTimeString()}</time>
                     </div>
                 </div>
@@ -240,6 +278,14 @@
 			messageInput.attr("disabled", true);
 			scrollToBottom();
 
+			// if (
+			// 	!mssgBox.includes(
+			// 		"check appointments" ||
+			// 			"Check appointments" ||
+			// 			"Check appointment" ||
+			// 			"check appointment"
+			// 	)
+			// ) {
 			$.ajax({
 				type: "POST",
 				url: "{{request.path}}",
@@ -249,9 +295,15 @@
 				}),
 				contentType: "application/json",
 				success: (response) => {
+					console.log(response);
 					if (response.response) {
 						setTimeout(() => {
-							chatContainer.append(bot_response(response.response));
+							if (response.response.symptoms && response.response.remedies) {
+								chatContainer.append(bot_response_medic(response.response));
+								scrollToBottom();
+							} else {
+								chatContainer.append(bot_response(response.response));
+							}
 							messageInput.attr("disabled", false);
 							scrollToBottom();
 
@@ -270,7 +322,7 @@
                                                     <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
                                                     <g id="SVGRepo_iconCarrier">
                                                         <rect width="48" height="48" fill="white" fill-opacity="0.01"></rect>
-                                                        <rect x="9" y="18" width="30" height="24" rx="2" fill="#2F88FF" stroke="#000000" stroke-width="4"></rect>
+                                                        <rect x="9" y="18" width="30" height="24" rx="2" fill="red" stroke="#000000" stroke-width="4"></rect>
                                                         <circle cx="17" cy="26" r="2" fill="white"></circle>
                                                         <circle cx="31" cy="26" r="2" fill="white"></circle>
                                                         <path d="M20 32C18.8954 32 18 32.8954 18 34C18 35.1046 18.8954 36 20 36V32ZM28 36C29.1046 36 30 35.1046 30 34C30 32.8954 29.1046 32 28 32V36ZM20 36H28V32H20V36Z" fill="white"></path>
@@ -285,69 +337,126 @@
                                         </div>
                                         <div class="chat-body">
                                             <div class="chat-content">
-                                                <form method="POST" id="appointmentForm">
-                                                    <div class="my-2">
-                                                        <label for="">Date available</label>
-                                                        {{form.date}}
-                                                    </div>
-                                                    <div class="my-2">
-                                                        <label for="">Doctor</label>
-                                                        {{form.doctor}}
-                                                    </div>
-                                                    <div class="my-2">
-                                                        <label for="">What's your reason for your appointment?</label>
-                                                        {{form.reason}}
-                                                    </div>
-                                                    <div>
-                                                        <button class="btn btn-success appointment-btn" type="button">
-                                                            Submit
-                                                        </button>
-                                                    </div>
+                                                <form id="appointmentForm">
+                                                    <input type="text" name="name" placeholder="Your Name">
+                                                    <input type="date" name="appointmentDate" placeholder="Date">
+                                                    <input type="time" name="appointmentTime" placeholder="Time">
+                                                    <button type="submit">Submit</button>
                                                 </form>
-                                                <time class="chat-time" datetime="${new Date().toISOString()}">${new Date().toLocaleTimeString()}</time>
                                             </div>
                                         </div>
                                     </div>`;
-
 								chatContainer.append(formHtml);
-								$("input").addClass("form-control");
-								$("select").addClass("form-select");
-								$("textarea").addClass("form-control");
 								scrollToBottom();
-
-								// Attach the click event to the newly added button
-								$(document).on("click", ".appointment-btn", function () {
-									const formData = $("#appointmentForm").serialize();
+							} else if (
+								response.response.includes("Fetching your booked appointments")
+							) {
+								$(document).ready(() => {
 									$.ajax({
-										type: "POST",
-										url: "/api/appointment/",
-										data: formData,
+										type: "GET",
+										url: "/api/get-appointments/",
 										success: (response) => {
-											if (response.success) {
-												chatContainer.append(bot_response(response.success));
-											} else if (response.error) {
-												chatContainer.append(bot_response(response.error));
-											} else if (response.filled) {
-												chatContainer.append(bot_response(response.filled));
-											}
-											scrollToBottom();
+											text = "";
+											response.forEach((element) => {
+												console.log(response);
+												text += `
+													<tr>
+														<td class="table-active" id="">${element.date}</td>
+														<td id="">${element.doctor}</td>
+													</tr>
+												`;
+											});
+											chatContainer.append(
+												bot_response(`
+												<p>Here's a list of your active appointments</p>
+												<br>
+											<table class="table">
+												<thead>
+													<tr>
+														<th scope="col">Date</th>
+														<th scope="col">With Doctor</th>
+													</tr>
+												</thead>
+												<tbody>
+													${text}
+												</tbody>
+											</table>
+											`)
+											);
 										},
-										error: () => {
-											console.log("An error occurred on the client side.");
+									});
+								});
+							} else if (
+								response.response.includes(
+									"Extracting your booked appointments"
+								)
+							) {
+								$(document).ready(() => {
+									$.ajax({
+										type: "GET",
+										url: "/api/get-appointments/",
+										success: (response) => {
+											text = "";
+											response.forEach((element) => {
+												console.log(response);
+												text += `
+													<tr>
+														<td class="table-active" id="">${element.date}</td>
+														<td id="">${element.doctor}</td>
+														<td id="">
+															<button class="btn btn-sm btn-warning reschedule">
+																Reschedule
+															</button>
+														</td>
+													</tr>
+												`;
+											});
+											chatContainer.append(
+												bot_response(`
+												<p>Here's a list of your active appointments that you can reschedule</p>
+												<br>
+											<table class="table">
+												<thead>
+													<tr>
+														<th scope="col">Date</th>
+														<th scope="col">With Doctor</th>
+														<th scope="col">Action</th>
+													</tr>
+												</thead>
+												<tbody>
+													${text}
+												</tbody>
+											</table>
+											`)
+											);
 										},
 									});
 								});
 							}
-						}, 2000);
+						}, 500);
 					}
 				},
 				error: (error) => {
-					console.log("Error:", error);
+					console.error(error);
 					messageInput.attr("disabled", false);
+					scrollToBottom();
 				},
 			});
+			// } else {
+			// console
+			// }
 		}
 	});
 </script>
-
+<script>
+	$(document).ready(() => {
+		$.ajax({
+			type: "GET",
+			url: "/api/get-appointments/",
+			success: (response) => {
+				console.log(response);
+			},
+		});
+	});
+</script>
 {%endblock scripts%} {%endblock content%}

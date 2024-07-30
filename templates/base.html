@@ -52,23 +52,27 @@
 						<li class="nav-item">
 							<a class="nav-link" href="/dashboard/">Admin</a>
 						</li>
-						{%endif%}
+						{%endif%} {%if request.user.is_authenticated%}
 						<li class="nav-item dropdown">
 							<a
 								class="nav-link dropdown-toggle"
 								href="#"
 								data-bs-toggle="dropdown"
 								aria-expanded="false"
-								>Menu</a
+								>{{request.user.email}}</a
 							>
 							<ul class="dropdown-menu">
-								<li><a class="dropdown-item" href="#">Action</a></li>
-								<li><a class="dropdown-item" href="#">Another action</a></li>
 								<li>
-									<a class="dropdown-item" href="#">Something else here</a>
+									<a class="dropdown-item" href="{%url 'logout' %}">Logout</a>
 								</li>
+								<li><a class="dropdown-item" href="#">Settings</a></li>
 							</ul>
 						</li>
+						{%else%}
+						<li class="nav-item">
+							<a class="nav-link" href="{%url 'signin' %}">Sign In</a>
+						</li>
+						{%endif%}
 					</ul>
 				</div>
 			</div>
