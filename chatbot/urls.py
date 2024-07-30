@@ -9,6 +9,11 @@ urlpatterns = [
     path("api/appointment/", views.schedule_appointment),
     path("api/get-appointments/", views.get_appointments),
     path(
+        "api/reschedule-appointment/",
+        views.reschedule_appointment,
+        name="reschedule-appointment",
+    ),
+    path(
         "appointments/<int:pk>/delete/",
         views.delete_appointment,
         name="delete_appointment",

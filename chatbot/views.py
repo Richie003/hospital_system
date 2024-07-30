@@ -3,6 +3,8 @@ from django.http import JsonResponse
 from .models import Appointment, Inquiry, Doctor
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from django.utils.dateparse import parse_datetime
 from .utils import chatbot_exec, datetime_converter
 from .forms import AppointmentForm
 from django.views.decorators.csrf import csrf_exempt
@@ -40,15 +42,28 @@ def schedule_appointment(request):
             reason = request.POST["reason"]
             get_doctor_capacity = Doctor.objects.get(id=int(doctor))
             if get_doctor_capacity.capacity < 5:
-                appointment = Appointment(
-                    patient=patient, doctor_id=doctor, date=date, reason=reason
+                check_time = Appointment.objects.filter(
+                    doctor_id=get_doctor_capacity.id, date=date
                 )
-                appointment.save()
-                get_doctor_capacity.capacity += 1
-                get_doctor_capacity.save()
-                return JsonResponse(
-                    {"success": "Appointment scheduled successfully."}, safe=False
-                )
+                if not check_time.exists():
+                    appointment = Appointment(
+                        patient=patient, doctor_id=doctor, date=date, reason=reason
+                    )
+                    appointment.save()
+                    get_doctor_capacity.capacity += 1
+                    get_doctor_capacity.save()
+                    return JsonResponse(
+                        {"success": "Appointment scheduled successfully."}, safe=False
+                    )
+                else:
+                    return JsonResponse(
+                        {
+                            "dates": Appointment.objects.filter(
+                                doctor_id=get_doctor_capacity
+                            )
+                        },
+                        safe=False,
+                    )
             else:
                 return JsonResponse(
                     {
@@ -66,17 +81,59 @@ def get_appointments(request):
         if appointments:
             data = [
                 {
+                    "ID": i.id,
                     "reason": i.reason,
-                    "date": i.date,
+                    "doctor": i.doctor.name,
+                    "date": datetime_converter(i.date),
                 }
                 for i in appointments
-                if i.closed != True
+                if i.closed == False
             ]
+            print(data)
             return JsonResponse(data, safe=False)
         else:
             return JsonResponse(
                 {"not_found": "No appointment available for you."}, safe=False
             )
+
+
+@require_http_methods(["POST"])
+def reschedule_appointment(request):
+    try:
+        # Parse the request data
+        data = json.loads(request.body)
+        appointment_id = data.get("appointment_id")
+        new_date_str = data.get("new_date")
+
+        # Validate the required fields
+        if not appointment_id or not new_date_str:
+            return JsonResponse({"error": "Invalid data provided."}, status=400)
+
+        # Parse the new date
+        new_date = parse_datetime(new_date_str)
+        if not new_date:
+            return JsonResponse({"error": "Invalid date format."}, status=400)
+
+        # Fetch the appointment
+        appointment = get_object_or_404(Appointment, id=appointment_id)
+
+        # Reschedule the appointment
+        appointment.date = new_date
+        appointment.save()
+
+        # Return the updated appointment details
+        response_data = {
+            "appointment_id": appointment.id,
+            "patient": str(appointment.patient),
+            "doctor": str(appointment.doctor),
+            "new_date": appointment.date.isoformat(),
+            "reason": appointment.reason,
+            "closed": appointment.closed,
+        }
+        return JsonResponse(response_data, status=200)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
 
 
 def handle_inquiry(request):
